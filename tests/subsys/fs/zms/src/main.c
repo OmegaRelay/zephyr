@@ -560,6 +560,62 @@ ZTEST_F(zms, test_delete)
 #endif
 }
 
+ZTEST_F(zms, test_read_next)
+{
+	int err;
+	ssize_t len;
+	uint32_t filling_id;
+	uint32_t reading_count;
+	uint32_t read_id;
+	uint32_t expected_id;
+	struct zms_context ctx = ZMS_CONTEXT_INIT;
+
+	const uint32_t max_fill = 100;
+
+	fixture->fs.sector_count = 3;
+
+	err = zms_mount(&fixture->fs);
+	zassert_true(err == 0, "zms_mount call failure: %d", err);
+
+	for (filling_id = 0; filling_id < max_fill; filling_id++) {
+		len = zms_write(&fixture->fs, filling_id, &filling_id, sizeof(filling_id));
+
+		zassert_true(len == sizeof(filling_id), "zms_write failed: %d", len);
+
+		if (filling_id != 0) {
+			continue;
+		}
+	}
+
+	for (reading_count = 0; reading_count < max_fill + 1; reading_count++) {
+		len = zms_read_next(&fixture->fs, &ctx, &read_id, NULL, 0);
+		TC_PRINT("%d: rc: %d, id: %d\n", reading_count, len, read_id);
+		if (reading_count == max_fill) {
+			zassert_true(len == -ENOENT, "zms_read_next should not have found the entry: %d", len);
+		} else {
+			zassert_true(len == 0, "zms_read_next call failure: %d", len);
+			expected_id = (max_fill - reading_count - 1);
+			zassert_true(read_id == expected_id, "zms_read_next did not find correct id on %d: 0x%04x vs 0x%04x", reading_count, read_id, expected_id);
+		}
+	}
+
+	err = zms_delete(&fixture->fs, (max_fill - 1));
+	zassert_true(err == 0, "zms_delete call failure: %d", err);
+
+
+	for (reading_count = 0; reading_count < max_fill + 1; reading_count++) {
+		len = zms_read_next(&fixture->fs, &ctx, &read_id, NULL, 0);
+		TC_PRINT("%d: rc: %d, id: %d\n", reading_count, len, read_id);
+		if (reading_count == max_fill) {
+			zassert_true(len == -ENOENT, "zms_read_next should not have found the entry: %d", len);
+		} else {
+			zassert_true(len == 0, "zms_read_next call failure: %d", len);
+			expected_id = (max_fill - reading_count - 2);
+			zassert_true(read_id == expected_id, "zms_read_next did not find correct id on %d: 0x%04x vs 0x%04x", reading_count, read_id, expected_id);
+		}
+	}
+}
+
 #ifdef CONFIG_TEST_ZMS_SIMULATOR
 /*
  * Test that garbage-collection can recover all ate's even when the last ate,

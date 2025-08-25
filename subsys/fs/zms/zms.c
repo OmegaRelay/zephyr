@@ -1713,6 +1713,58 @@ ssize_t zms_read(struct zms_fs *fs, uint32_t id, void *data, size_t len)
 	return MIN(rc, len);
 }
 
+ssize_t zms_read_next(struct zms_fs *fs, struct zms_context *ctx, uint32_t *id, void *data, size_t len)
+{
+	int rc;
+	struct zms_ate wlk_ate = {0};
+	uint64_t rd_addr = 0;
+
+	// TODO: why is this not done elsewhwere?
+	if (fs == NULL || ctx == NULL || id == NULL) {
+		return -EINVAL;
+	}
+
+	if (!ctx->is_started) {
+		ctx->start_ate_addr = fs->ate_wra;
+		ctx->next_ate_addr = ctx->start_ate_addr;
+		ctx->is_started = true;
+
+		// ate_wra is at the latest uwritten ate
+		rc = zms_compute_prev_addr(fs, &ctx->next_ate_addr);
+		if (rc) {
+			return rc;
+		}
+	}
+
+	do {
+		if (ctx->next_ate_addr == ctx->start_ate_addr) {
+			return -ENOENT;
+		}
+
+		rc = zms_prev_ate(fs, &ctx->next_ate_addr, &wlk_ate);
+		if (rc == -ENOENT) {
+			continue;
+		} else if (rc) {
+			return rc;
+		}
+	} while (wlk_ate.id == UINT32_MAX);
+
+
+	*id = wlk_ate.id;
+	if (!data) {
+		return 0;
+	}
+
+	rd_addr &= ADDR_SECT_MASK;
+	rd_addr += wlk_ate.offset;
+	rc = zms_flash_rd(fs, rd_addr, data, MIN(len, wlk_ate.len));
+	if (rc) {
+		return rc;
+	}
+	return wlk_ate.len;
+}
+
+
 ssize_t zms_get_data_length(struct zms_fs *fs, uint32_t id)
 {
 	int rc;

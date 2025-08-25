@@ -68,8 +68,28 @@ struct zms_fs {
 };
 
 /**
+ * @ingroup zms_data_structures
+ * ZMS Context structure
+ */
+struct zms_context {
+	/** Address of next ate to read */
+	uint64_t next_ate_addr;
+	/** Address of first address read */
+	uint64_t start_ate_addr;
+	/** Tracks whether the intial ate address of the context is set */
+	bool is_started;
+};
+
+/**
  * @}
  */
+
+#define ZMS_CONTEXT_INIT (struct zms_context){ \
+    .next_ate_addr = 0, \
+    .start_ate_addr = 0, \
+    .is_started = false, \
+}
+
 
 /**
  * @defgroup zms_high_level_api ZMS API
@@ -179,6 +199,27 @@ ssize_t zms_read(struct zms_fs *fs, uint32_t id, void *data, size_t len);
  * @retval -ENOENT if there is no entry with the given `id` and history counter.
  */
 ssize_t zms_read_hist(struct zms_fs *fs, uint32_t id, void *data, size_t len, uint32_t cnt);
+
+/**
+ * @brief Read the next entry in the file system in reverse order.
+ *
+ * @param fs Pointer to the file system.
+ * @param context Context to keep for consecutive reads.
+ * @param id Pointer to store ID of the entry read.
+ * @param data Pointer to data buffer, if NULL, the entry data will not be read.
+ * @param len Number of bytes to read at most.
+ *
+ * @return Number of bytes read. On success, it will be equal to the number of bytes requested
+ * to be read or less than that if the stored data has a smaller size than the requested one.
+ * If data was NULL, will return 0.
+ * On error, returns negative value of error codes defined in `errno.h`.
+ * @retval Number of bytes read (> 0) on success.
+ * @retval -EACCES if ZMS is still not initialized.
+ * @retval -EIO if there is a memory read/write error.
+ * @retval -ENOENT if no more entries for the context are found.
+ */
+ssize_t zms_read_next(struct zms_fs *fs, struct zms_context *context, uint32_t *id, void *data,
+		      size_t len);
 
 /**
  * @brief Gets the length of the data that is stored in an entry with a given `id`
