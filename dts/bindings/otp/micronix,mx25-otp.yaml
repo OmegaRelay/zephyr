@@ -1,0 +1,23 @@
+title: MX25 OTP
+
+description: |
+  Micronix MX25 SPI-NOR OTP (One Time Programmable) controller.
+
+  This binding implementes the OTP driver api for MX25 devices.
+
+compatible: "micronix,mx25-otp"
+
+include: base.yaml
+
+examples:
+  - |
+    spi {
+      spi-nor {
+        compatible = "jedec,spi-nor";
+        {
+          otp {
+            compatible = "micronix,mx25-otp";
+          };
+        };
+      };
+    };

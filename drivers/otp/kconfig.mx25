@@ -1,0 +1,17 @@
+
+config OTP_MX25
+    bool "Micronix MX25 OTP driver"
+    default y
+    depends on DT_HAS_MICRONIX_MX25_OTP_ENABLED
+    depends on SPI_NOR
+    help
+	  Enable driver for OTP regions inside MX25 SPI-NOR devices
+
+if OTP_MX25
+
+config OTP_INIT_PRIORITY
+    default 90
+
+endif # OTP_MX25
+
+
