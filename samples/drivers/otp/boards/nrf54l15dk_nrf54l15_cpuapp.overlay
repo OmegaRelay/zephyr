@@ -1,0 +1,12 @@
+
+/{
+	aliases {
+		otp = &mx25_otp;
+	};
+};
+
+&mx25r64 {
+	mx25_otp: otp {
+		compatible = "micronix,mx25-otp";
+	};
+};
