@@ -1,3 +1,5 @@
+.. _submanifests:
+
 This directory can contain additional west manifest files. Any files
 in this directory will be included in the main west.yml file sorted by
 filename.
