@@ -4,7 +4,5 @@ filename.
 
 See example.yaml.sample for an example.
 
-For more details about how this works, see this part of the west
-documentation:
-
-https://docs.zephyrproject.org/latest/develop/west/manifest.html#example-2-2-downstream-with-directory-of-manifest-files
+For more details about how this works, see :ref:`this part <west-manifest-ex2.2>` of the west
+documentation.
