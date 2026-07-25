@@ -1,0 +1,13 @@
+
+menuconfig RTTTL
+	bool "Ring Tone Text Transfer Language support"
+	select BUZZER
+
+if RTTTL
+
+module = RTTTL
+module-str = RTTTL Support
+module-help = Sets log level for RTTTL support
+source "subsys/logging/Kconfig.template.log_config"
+
+endif
